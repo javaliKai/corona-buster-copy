@@ -11,6 +11,11 @@ export default class CoronaBusterScene extends Phaser.Scene {
     this.nav_left = false;
     this.nav_right = false;
     this.shoot = false;
+
+    // PLayer & speed
+    this.player = undefined;
+    this.speed = 100;
+    this.cursor = undefined;
   }
   preload() {
     this.load.image('background', 'images/bg_layer1.png');
@@ -18,6 +23,10 @@ export default class CoronaBusterScene extends Phaser.Scene {
     this.load.image('left-btn', 'images/left-btn.png');
     this.load.image('right-btn', 'images/right-btn.png');
     this.load.image('shoot-btn', 'images/shoot-btn.png');
+    this.load.spritesheet('player', 'images/ship.png', {
+      frameWidth: 66,
+      frameHeight: 66,
+    });
   }
   create() {
     // Bg
@@ -39,6 +48,12 @@ export default class CoronaBusterScene extends Phaser.Scene {
 
     // Create buttons
     this.createButtons();
+
+    // Untuk keyboard control
+    this.cursor = this.input.keyboard.createCursorKeys();
+
+    // Panggil createPlayer() method untuk buat player
+    this.player = this.createPlayer();
   }
   update(time) {
     // buat awan bergerak ke bawah
@@ -57,6 +72,9 @@ export default class CoronaBusterScene extends Phaser.Scene {
         child.y = 0;
       }
     });
+
+    // Gerakan player
+    this.movePlayer(this.player, time);
   }
   createButtons() {
     this.input.addPointer(3);
@@ -126,5 +144,57 @@ export default class CoronaBusterScene extends Phaser.Scene {
       },
       this
     );
+  }
+  createPlayer() {
+    const player = this.physics.add.sprite(200, 450, 'player');
+    player.setCollideWorldBounds(true);
+
+    // Player animations
+    this.anims.create({
+      key: 'turn',
+      frames: [
+        {
+          key: 'player',
+          frame: 0,
+        },
+      ],
+    });
+
+    this.anims.create({
+      key: 'left',
+      frames: this.anims.generateFrameNumbers('player', {
+        start: 1,
+        end: 2,
+      }),
+    });
+
+    this.anims.create({
+      key: 'right',
+      frames: this.anims.generateFrameNumbers('player', {
+        start: 1,
+        end: 2,
+      }),
+    });
+    return player;
+  }
+  movePlayer(player, time) {
+    if (this.cursor.left.isDown || this.nav_left) {
+      this.player.setVelocityX(this.speed * -1);
+      this.player.anims.play('left', true);
+      this.player.setFlipX(false);
+    } else if (this.cursor.right.isDown || this.nav_right) {
+      this.player.setVelocityX(this.speed);
+      this.player.anims.play('right', true);
+      this.player.setFlipX(true);
+    } else if (this.cursor.up.isDown) {
+      this.player.setVelocity(0, this.speed * -1);
+      this.player.anims.play('turn', true);
+    } else if (this.cursor.down.isDown) {
+      this.player.setVelocity(0, this.speed);
+      this.player.anims.play('turn', true);
+    } else {
+      this.player.setVelocity(0);
+      this.player.anims.play('turn');
+    }
   }
 }

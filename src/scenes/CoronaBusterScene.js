@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import FallingObject from '../ui/FallingObject';
+import Laser from '../ui/Laser';
 
 export default class CoronaBusterScene extends Phaser.Scene {
   constructor() {
@@ -22,6 +23,10 @@ export default class CoronaBusterScene extends Phaser.Scene {
     // Enemies
     this.enemies = undefined;
     this.enemySpeed = 50;
+
+    // Lasers
+    this.lasers = undefined;
+    this.lastFired = 10;
   }
 
   preload() {
@@ -35,6 +40,10 @@ export default class CoronaBusterScene extends Phaser.Scene {
       frameHeight: 66,
     });
     this.load.image('enemy', 'images/enemy.png');
+    this.load.spritesheet('laser', 'images/laser-bolts.png', {
+      frameWidth: 16,
+      frameHeight: 16,
+    });
   }
 
   create() {
@@ -77,6 +86,22 @@ export default class CoronaBusterScene extends Phaser.Scene {
       callbackScope: this,
       loop: true,
     });
+
+    // Buat tembakan laser
+    this.lasers = this.physics.add.group({
+      classType: Laser,
+      maxSize: 10,
+      runChildUpdate: true,
+    });
+
+    // Code waktu laser dan virus overlap
+    this.physics.add.overlap(
+      this.lasers,
+      this.enemies,
+      this.hitEnemy,
+      null,
+      this
+    );
   }
 
   update(time) {
@@ -223,6 +248,14 @@ export default class CoronaBusterScene extends Phaser.Scene {
       this.player.setVelocity(0);
       this.player.anims.play('turn');
     }
+
+    if (this.shoot && time > this.lastFired) {
+      const laser = this.lasers.get(0, 0, 'laser');
+      if (laser) {
+        laser.fire(this.player.x, this.player.y);
+        this.lastFired = time + 150;
+      }
+    }
   }
 
   spawnEnemy() {
@@ -236,5 +269,10 @@ export default class CoronaBusterScene extends Phaser.Scene {
     if (enemy) {
       enemy.spawn(positionX);
     }
+  }
+
+  hitEnemy(laser, enemy) {
+    laser.die();
+    enemy.die();
   }
 }
